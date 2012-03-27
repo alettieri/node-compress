@@ -153,21 +153,40 @@ class Gzip : public ObjectWrap {
       Local<Value> exception = Exception::TypeError(String::New("Bad argument"));
       return ThrowException(exception);
     }
+    
     char* buf = new char[len];
+
+    if( buf == NULL ) { // Hopefully this won't happen
+     
+     Local<Value> exception = Exception::TypeError( String::New("Out of memory") );
+     return ThrowException( exception );
+    }
+
     ssize_t written = DecodeWrite(buf, len, args[0], enc);
     assert(written == len);
-
+    
     char* out;
     int out_size;
     int r = gzip->GzipDeflate(buf, len, &out, &out_size);
 
-    if (out_size==0) {
-      return scope.Close(String::New(""));
+    if ( out_size == 0 ) {
+
+      if( out != NULL )
+          free(out); // Free the stream
+      if( buf != NULL )
+          delete buf; // Delete the buffer variable
+
+      return scope.Close(String::New("")); // return an empty string
     }
 
     Local<Value> outString = Encode(out, out_size, BINARY);
-    free(out);
-    return scope.Close(outString);
+
+    if( out != NULL)
+      free(out); // Free the stream
+    if( buf != NULL )
+      delete buf; // delete the buffer
+
+    return scope.Close(outString); //write out the deflate
   }
 
   static Handle<Value>
@@ -337,6 +356,15 @@ class Gunzip : public ObjectWrap {
     }
 
     char* buf = new char[len];
+
+    if( buf == NULL ) { // Hopefully this won't happen
+     
+     Local<Value> exception = Exception::TypeError( String::New("Out of memory") );
+     
+     return ThrowException( exception );
+    
+    }
+
     ssize_t written = DecodeWrite(buf, len, args[0], BINARY);
     assert(written == len);
 
@@ -344,9 +372,24 @@ class Gunzip : public ObjectWrap {
     int out_size;
     int r = gunzip->GunzipInflate(buf, len, &out, &out_size);
 
+    if( out_size == 0 ) {
+      
+      if( out != NULL)
+        free( out ); // free the stream
+      if( buf != NULL )
+        delete buf; // delete the buffer 
+
+      return scope.Close( String::New("") ); // return an empty string
+    }
+
     Local<Value> outString = Encode(out, out_size, enc);
-    free(out);
-    return scope.Close(outString);
+
+    if( out != NULL )
+      free(out); // free the stream
+    if( buf != NULL )
+      delete buf; // Delete the buffer
+
+    return scope.Close( outString ); // return inflate
   }
 
   static Handle<Value>
