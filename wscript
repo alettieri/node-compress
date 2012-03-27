@@ -36,3 +36,4 @@ def shutdown():
       mkdir('build/default')
     if exists('build/Release/compress.node') and not exists('build/default/compress.node'):
       symlink(os.getcwd()+'/build/Release/compress.node', 'build/default/compress.node')
+    symlink('build/default/compress.node', 'compress.node')
