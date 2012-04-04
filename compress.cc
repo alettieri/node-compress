@@ -54,31 +54,44 @@ class Gzip : public ObjectWrap {
     if (data_len == 0)
       return 0;
 
-    while(data_len>0) {    
+    while( data_len>0 ) {    
+      
       if (data_len>CHUNK) {
-	strm.avail_in = CHUNK;
+      
+        strm.avail_in = CHUNK;
+      
       } else {
-	strm.avail_in = data_len;
+      
+        strm.avail_in = data_len;
+      
       }
 
       strm.next_in = (Bytef*)data;
       do {
-	temp = (char *)realloc(*out, CHUNK*i +1);
-	if (temp == NULL) {
-	  return Z_MEM_ERROR;
-	}
-	*out = temp;
-	strm.avail_out = CHUNK;
-        strm.next_out = (Bytef*)*out + *out_len;
-	ret = deflate(&strm, Z_NO_FLUSH);
-	assert(ret != Z_STREAM_ERROR);  /* state not clobbered */
-	*out_len += (CHUNK - strm.avail_out);
-	i++;
-      } while (strm.avail_out == 0);
+       
+       temp = (char *)realloc(*out, CHUNK*i +1);
+       
+       if (temp == NULL) {
+       
+         return Z_MEM_ERROR;
+       
+       }
+       
+       *out = temp;
+       strm.avail_out = CHUNK;
+       strm.next_out = (Bytef*)*out + *out_len;
+       ret = deflate(&strm, Z_NO_FLUSH);
+       assert(ret != Z_STREAM_ERROR);  /* state not clobbered */
+       *out_len += (CHUNK - strm.avail_out);
+       i++;
+      
+      } while ( strm.avail_out == 0 );
 
       data += CHUNK;
       data_len -= CHUNK;
-    }
+    
+    } //end while data_len > 0
+
     return ret;
   }
 
@@ -96,7 +109,7 @@ class Gzip : public ObjectWrap {
     do {
       temp = (char *)realloc(*out, CHUNK*i);
       if (temp == NULL) {
-	return Z_MEM_ERROR;
+         return Z_MEM_ERROR;
       }
       *out = temp;
       strm.avail_out = CHUNK;
@@ -174,7 +187,7 @@ class Gzip : public ObjectWrap {
       if( out != NULL )
           free(out); // Free the stream
       if( buf != NULL )
-          delete buf; // Delete the buffer variable
+          delete[] buf; // Delete the buffer variable
 
       return scope.Close(String::New("")); // return an empty string
     }
@@ -184,7 +197,7 @@ class Gzip : public ObjectWrap {
     if( out != NULL)
       free(out); // Free the stream
     if( buf != NULL )
-      delete buf; // delete the buffer
+      delete[] buf; // delete the buffer
 
     return scope.Close(outString); //write out the deflate
   }
@@ -277,33 +290,33 @@ class Gunzip : public ObjectWrap {
 
     while(data_len>0) {    
       if (data_len>CHUNK) {
-	strm.avail_in = CHUNK;
+  strm.avail_in = CHUNK;
       } else {
-	strm.avail_in = data_len;
+  strm.avail_in = data_len;
       }
 
       strm.next_in = (Bytef*)data;
 
       do {
-	temp = (char *)realloc(*out, CHUNK*i);
-	if (temp == NULL) {
-	  return Z_MEM_ERROR;
-	}
-	*out = temp;
+  temp = (char *)realloc(*out, CHUNK*i);
+  if (temp == NULL) {
+    return Z_MEM_ERROR;
+  }
+  *out = temp;
         strm.avail_out = CHUNK;
-	strm.next_out = (Bytef*)*out + *out_len;
-	ret = inflate(&strm, Z_NO_FLUSH);
-	assert(ret != Z_STREAM_ERROR);  /* state not clobbered */
-	switch (ret) {
-	case Z_NEED_DICT:
-	  ret = Z_DATA_ERROR;     /* and fall through */
-	case Z_DATA_ERROR:
-	case Z_MEM_ERROR:
-	  (void)inflateEnd(&strm);
-	  return ret;
-	}
-	*out_len += (CHUNK - strm.avail_out);
-	i++;
+  strm.next_out = (Bytef*)*out + *out_len;
+  ret = inflate(&strm, Z_NO_FLUSH);
+  assert(ret != Z_STREAM_ERROR);  /* state not clobbered */
+  switch (ret) {
+  case Z_NEED_DICT:
+    ret = Z_DATA_ERROR;     /* and fall through */
+  case Z_DATA_ERROR:
+  case Z_MEM_ERROR:
+    (void)inflateEnd(&strm);
+    return ret;
+  }
+  *out_len += (CHUNK - strm.avail_out);
+  i++;
       } while (strm.avail_out == 0);
       data += CHUNK;
       data_len -= CHUNK;
@@ -377,7 +390,7 @@ class Gunzip : public ObjectWrap {
       if( out != NULL)
         free( out ); // free the stream
       if( buf != NULL )
-        delete buf; // delete the buffer 
+        delete[] buf; // delete the buffer 
 
       return scope.Close( String::New("") ); // return an empty string
     }
@@ -387,7 +400,7 @@ class Gunzip : public ObjectWrap {
     if( out != NULL )
       free(out); // free the stream
     if( buf != NULL )
-      delete buf; // Delete the buffer
+      delete[] buf; // Delete the buffer
 
     return scope.Close( outString ); // return inflate
   }
